@@ -1,213 +1,208 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "PHP on EC2"
+
 Resources:
-# VPC
-    MyVPC:
-      Type: AWS::EC2::VPC
-      Properties:
-        CidrBlock: 10.0.0.0/16
-        EnableDnsSupport: true
-        EnableDnsHostnames: true
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-VPC'
-# サブネット
-    MyPrivateSubnet:
-      Type: "AWS::EC2::Subnet"
-      Properties:
-        AvailabilityZone: !Select [0, !GetAZs ""]
-        CidrBlock: 10.0.0.0/24
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-PrivateSubnet'
-        VpcId: !Ref MyVPC
-    MyPublicSubnet:
-      Type: "AWS::EC2::Subnet"
-      Properties:
-        AvailabilityZone: !Select [0, !GetAZs ""]
-        CidrBlock: 10.0.1.0/24
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-PublicSubnet'
-        VpcId: !Ref MyVPC
-# NAT定義
-    MyNATGateway:
-      Type: AWS::EC2::NatGateway
-      Properties: 
-        AllocationId: !GetAtt 
-          - MyEIP
-          - AllocationId
-        SubnetId: !Ref MyPublicSubnet
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-NAT'
-    MyEIP:
-      Type: AWS::EC2::EIP
-# IGW設定
-    MyInternetGateway:
-      Type: "AWS::EC2::InternetGateway"
-      Properties:
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-IGW'
-    AttachIGW:
-      Type: "AWS::EC2::VPCGatewayAttachment"
-      Properties:
-        VpcId: !Ref MyVPC
-        InternetGatewayId: !Ref MyInternetGateway
-# ネットワーク設定/Public
-    MyPublicRouteTable:
-      Type: AWS::EC2::RouteTable
-      Properties: 
-        VpcId: !Ref MyVPC
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-PublicRouteTable'
-    MyPublicRoute:
-      Type: AWS::EC2::Route
-      DependsOn: MyInternetGateway
-      Properties: 
-        RouteTableId: !Ref MyPublicRouteTable
-        DestinationCidrBlock: 0.0.0.0/0
-        GatewayId: !Ref MyInternetGateway
-    PublicSubnetRouteTableAssociation:
-      Type: "AWS::EC2::SubnetRouteTableAssociation"
-      Properties:
-        SubnetId: !Ref MyPublicSubnet
-        RouteTableId: !Ref MyPublicRouteTable
-# ネットワーク設定/Private
-    MyPrivateRouteTable:
-      Type: "AWS::EC2::RouteTable"
-      Properties:
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-PrivateRouteTable'
-        VpcId: !Ref MyVPC
-    MyPrivateRoute:
-      Type: "AWS::EC2::Route"
-      Properties:
-        RouteTableId: !Ref MyPrivateRouteTable
-        DestinationCidrBlock: 0.0.0.0/0
-        NatGatewayId: !Ref MyNATGateway
-    PrivateSubnetRouteTableAssociation:
-      Type: "AWS::EC2::SubnetRouteTableAssociation"
-      Properties:
-        SubnetId: !Ref MyPrivateSubnet
-        RouteTableId: !Ref MyPrivateRouteTable
+  # VPC
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: "Name"
+          Value: "PHP-test-VPC"
+  # サブネット
+  # MyPrivateSubnet:
+  #   Type: "AWS::EC2::Subnet"
+  #   Properties:
+  #     CidrBlock: 10.0.0.0/24
+  #     Tags:
+  #       - Key: 'Name'
+  #         Value: 'PHP-test-PrivateSubnet'
+  #     VpcId: !Ref MyVPC
+  MyPublicSubnet:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      CidrBlock: 10.0.192.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: "Name"
+          Value: "PHP-test-PublicSubnet"
+      VpcId: !Ref MyVPC
+  # NAT定義
+  # MyNATGateway:
+  #   Type: AWS::EC2::NatGateway
+  #   Properties:
+  #     AllocationId: !GetAtt
+  #       - MyEIP
+  #       - AllocationId
+  #     SubnetId: !Ref MyPublicSubnet
+  #     Tags:
+  #       - Key: 'Name'
+  #         Value: 'PHP-test-NAT'
+  # MyEIP:
+  #   Type: AWS::EC2::EIP
+  # IGW設定
+  MyInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: "PHP-test-IGW"
+  AttachIGW:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyInternetGateway
+  # ネットワーク設定/Public
+  MyPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: "Name"
+          Value: "PHP-test-PublicRouteTable"
+  MyPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: MyInternetGateway
+    Properties:
+      RouteTableId: !Ref MyPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyInternetGateway
+  PublicSubnetRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref MyPublicSubnet
+      RouteTableId: !Ref MyPublicRouteTable
+  # ネットワーク設定/Private
+  # MyPrivateRouteTable:
+  #   Type: "AWS::EC2::RouteTable"
+  #   Properties:
+  #     Tags:
+  #       - Key: 'Name'
+  #         Value: 'PHP-test-PrivateRouteTable'
+  #     VpcId: !Ref MyVPC
+  # MyPrivateRoute:
+  #   Type: "AWS::EC2::Route"
+  #   Properties:
+  #     RouteTableId: !Ref MyPrivateRouteTable
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     NatGatewayId: !Ref MyNATGateway
+  # PrivateSubnetRouteTableAssociation:
+  #   Type: "AWS::EC2::SubnetRouteTableAssociation"
+  #   Properties:
+  #     SubnetId: !Ref MyPrivateSubnet
+  #     RouteTableId: !Ref MyPrivateRouteTable
 
-# EC2定義
-    MyEC2forPHP:
-      Type: "AWS::EC2::Instance"
-      Properties:
-        ImageId: "ami-08a706ba5ea257141"
-        InstanceType: "t2.micro"
-        SubnetId: !Ref MyPrivateSubnet
-        BlockDeviceMappings:
-          - DeviceName: "/dev/xvda"
-            Ebs:
-              VolumeType: "gp2"
-              VolumeSize: 8
-        KeyName: "sample-ec2"
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-EC2'
-        SecurityGroupIds:
-          - !Ref EC2SecurityGroup
-        IamInstanceProfile: !Ref EC2InstanceProfile
-    EC2SecurityGroup:
-      Type: "AWS::EC2::SecurityGroup"
-      Properties:
-        GroupDescription: "PHP-test-EC2-SecurityGroup"
-        VpcId: !Ref MyVPC
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-SecurityGroup'
-        SecurityGroupIngress:
-          - IpProtocol: tcp
-            FromPort: '22'
-            ToPort: '22'
-            CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
-            FromPort: '443'
-            ToPort: '443'
-            CidrIp: 0.0.0.0/0
+  # EC2定義
+  MyEC2forPHP:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: "ami-08a706ba5ea257141"
+      InstanceType: "t2.micro"
+      SubnetId: !Ref MyPublicSubnet
+      KeyName: "sample-ec2"
+      Tags:
+        - Key: "Name"
+          Value: "PHP-test-EC2"
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile
+  EC2SecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "PHP-test-EC2-SecurityGroup"
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: "Name"
+          Value: "PHP-test-SecurityGroup"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "22"
+          ToPort: "22"
+          CidrIp: 0.0.0.0/0
+        # - IpProtocol: tcp
+        #   FromPort: "80"
+        #   ToPort: "80"
+        #   CidrIp: 0.0.0.0/0 
 
-    EndpointSecurityGroup:
-      Type: "AWS::EC2::SecurityGroup"
-      Properties:
-        GroupDescription: "PHP-test-Endpoint-SecurityGroup"
-        VpcId: !Ref MyVPC
-        Tags:
-          - Key: 'Name'
-            Value: 'PHP-test-Endpoint-SecurityGroup'
-        SecurityGroupIngress:
-          - IpProtocol: tcp
-            FromPort: '443'
-            ToPort: '443'
-            CidrIp: 0.0.0.0/0
-    EC2InstanceProfile:
-      Type: "AWS::IAM::InstanceProfile"
-      Properties:
-        Path: /
-        Roles:
-          - Ref: EC2IAMRole
-        InstanceProfileName: !Sub PHP-test-EC2InstanceProfile
-# SSM定義
-    MyEndpointSSM:
-      Type: "AWS::EC2::VPCEndpoint"
-      Properties:
-        PrivateDnsEnabled: true
-        SecurityGroupIds:
-          - !Ref EndpointSecurityGroup
-        ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
-        SubnetIds:
-          - !Ref MyPrivateSubnet
-        VpcEndpointType: Interface
-        VpcId: !Ref MyVPC
-    MyEndpointSSMMessages:
-      Type: "AWS::EC2::VPCEndpoint"
-      Properties:
-        PrivateDnsEnabled: true
-        SecurityGroupIds:
-          - !Ref EndpointSecurityGroup
-        ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
-        SubnetIds:
-          - !Ref MyPrivateSubnet
-        VpcEndpointType: Interface
-        VpcId: !Ref MyVPC
-    MyEndpointEC2Messages:
-      Type: "AWS::EC2::VPCEndpoint"
-      Properties:
-        PrivateDnsEnabled: true
-        SecurityGroupIds:
-          - !Ref EndpointSecurityGroup
-        ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
-        SubnetIds:
-          - !Ref MyPrivateSubnet
-        VpcEndpointType: Interface
-        VpcId: !Ref MyVPC
-    MyEndpointS3:
-      Type: "AWS::EC2::VPCEndpoint"
-      Properties:
-        RouteTableIds:
-          - !Ref MyPrivateRouteTable
-        ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-        VpcEndpointType: Gateway
-        VpcId: !Ref MyVPC
-# IAM定義
-    EC2IAMRole:
-      Type: "AWS::IAM::Role"
-      Properties:
-        RoleName: !Sub php-test-env-SSM-role
-        AssumeRolePolicyDocument:
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - ec2.amazonaws.com
-              Action:
-                - sts:AssumeRole
-        Path: /
-        ManagedPolicyArns:
-          - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+  EndpointSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "PHP-test-Endpoint-SecurityGroup"
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: "Name"
+          Value: "PHP-test-Endpoint-SecurityGroup"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "443"
+          ToPort: "443"
+          CidrIp: 0.0.0.0/0
+  EC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: /
+      Roles:
+        - Ref: EC2IAMRole
+      InstanceProfileName: !Sub PHP-test-EC2InstanceProfile
+  # SSM定義
+  MyEndpointSSM:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      SubnetIds:
+        - !Ref MyPublicSubnet
+      VpcEndpointType: Interface
+      VpcId: !Ref MyVPC
+  MyEndpointSSMMessages:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
+      SubnetIds:
+        - !Ref MyPublicSubnet
+      VpcEndpointType: Interface
+      VpcId: !Ref MyVPC
+  MyEndpointEC2Messages:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
+      SubnetIds:
+        - !Ref MyPublicSubnet
+      VpcEndpointType: Interface
+      VpcId: !Ref MyVPC
+  MyEndpointS3:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      RouteTableIds:
+        - !Ref MyPublicRouteTable
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      VpcId: !Ref MyVPC
+  # IAM定義
+  EC2IAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub php-test-env-SSM-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
